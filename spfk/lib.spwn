@@ -1,4 +1,4 @@
-main = (tokens: @array, dump_whole_memory: @bool = false, memory_max: @number = 30000, timeout_time: @number = 60) {
+main = (tokens: @array, add_to_level: @bool = true, dump_whole_memory: @bool = false, memory_max: @number = 30000, timeout_time: @number = 60) {
     obj_props_vals = obj_props.values() // returns a list of the values of the object properties
     obj_props_names = obj_props_vals.map(x => x.name) // returns a list of the names of the object properties
     obj_props_ids = obj_props_vals.map(x => x.id) // returns a list of the ids of the object properties
@@ -171,7 +171,11 @@ main = (tokens: @array, dump_whole_memory: @bool = false, memory_max: @number = 
             properties.set(prop_id, prop_value)
         }
         pointer = temp_pointer
-        $.print(properties)
+        if add_to_level {
+            $.add(properties)
+        } else {
+            $.print(properties)
+        }
     }
 
     dump_memory = () { // #

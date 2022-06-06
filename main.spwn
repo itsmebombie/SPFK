@@ -3,9 +3,9 @@ spfk = import spfk // imports the actual interpreter
 while true {
     let input = $.get_input("") // all tokens are one character, so we dont need to tokenize
     $.pop(input) // remove the newline character
-    if input == "exit" { break } // exit the program if the user types "exit"
+    if input.lowercase() in ["exit", "compile"] { break } // exit the program if the user types "exit"
 
-    out = spfk.interpreter(@array(input), false, 30000, 60) // run the interpreter
+    out = spfk.interpreter(@array(input), true, false, 30000, 60) // run the interpreter
     $.print(out.output.join("")) // print the output
     $.writefile("dump_latest.txt", out.dump.join("\n")) // write the dump to a file
 }
