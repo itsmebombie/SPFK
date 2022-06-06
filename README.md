@@ -26,7 +26,18 @@ This command gets the next cells' values and the amount of values it gets depend
 It is only used when a string/array is necessary while adding an object.
 For example, if your memory looks like this `3, 67, 70, 73, 94` and the pointer is pointing at the first cell, it will either return `[67, 70, 73]` or `CFI` depending on the situation. 
 
+# USAGE
+First of all, copy the folder [libraries](./libraries) in your script folder for it to work.
+
+There is only one macro that can be called from the library, and that is `interpreter(code, dump_whole_memory = false, max_memory_cells = 30000, max_execution_time = 60)` with 4 parameters. 
+The `code` parameter is a mandatory parameter that determines the code the interpreter should execute. 
+The `dump_whole_memory` parameter is an optional parameter that determines whether the interpreter should dump the whole memory or only a portion of it. This is defaulted to `false`.
+The `max_memory_cells` parameter is an optional parameter that determines how large the memory should be. This is defaulted to `30000` cells.
+The `max_execution_time` parameter is an optional parameter that determines how many seconds the script should be executing for before the interpreter timing out. This is defaulted to `60` seconds.
+
+An example on how to use the interpreter macro in an actual script is [here](./libraries/spfk/lib.spwn).
+
 # OTHERS
+Keep in mind that the interpreter will always dump the memory after executing the script, and it will return it along with the output (`return {output: output, dump: dump}`).
+
 If something is unclear, please tell me so I can make it easier to understand!
-
-
