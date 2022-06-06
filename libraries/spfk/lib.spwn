@@ -1,0 +1,237 @@
+main = (tokens: @array, dump_whole_memory: @bool = false, memory_max: @number = 30000, timeout_time: @number = 60) {
+    obj_props_vals = obj_props.values() // returns a list of the values of the object properties
+    obj_props_names = obj_props_vals.map(x => x.name) // returns a list of the names of the object properties
+    obj_props_ids = obj_props_vals.map(x => x.id) // returns a list of the ids of the object properties
+    obj_props_patterns = obj_props_vals.map(x => x.pattern) // returns a list of the patterns of the object properties
+
+    value_limits = [0, 2^8-1] // the range of values that can be stored in one cell
+    time = $.time()
+
+    let index = 0
+    let loop_open = []
+    let output = []
+    let dump = []
+
+    let memory = [0] * memory_max
+    let pointer = 0
+    
+    to_ascii = (number: @number) { // credits to https://github.com/sertdfyguhi for this
+        ascii = ['AA==', 'AQ==', 'Ag==', 'Aw==', 'BA==', 'BQ==', 'Bg==', 'Bw==', 'CA==', 'CQ==', 'Cg==', 'Cw==', 'DA==', 'DQ==', 'Dg==', 'Dw==', 'EA==', 'EQ==', 'Eg==', 'Ew==', 'FA==', 'FQ==', 'Fg==', 'Fw==', 'GA==', 'GQ==', 'Gg==', 'Gw==', 'HA==', 'HQ==', 'Hg==', 'Hw==', 'IA==', 'IQ==', 'Ig==', 'Iw==', 'JA==', 'JQ==', 'Jg==', 'Jw==', 'KA==', 'KQ==', 'Kg==', 'Kw==', 'LA==', 'LQ==', 'Lg==', 'Lw==', 'MA==', 'MQ==', 'Mg==', 'Mw==', 'NA==', 'NQ==', 'Ng==', 'Nw==', 'OA==', 'OQ==', 'Og==', 'Ow==', 'PA==', 'PQ==', 'Pg==', 'Pw==', 'QA==', 'QQ==', 'Qg==', 'Qw==', 'RA==', 'RQ==', 'Rg==', 'Rw==', 'SA==', 'SQ==', 'Sg==', 'Sw==', 'TA==', 'TQ==', 'Tg==', 'Tw==', 'UA==', 'UQ==', 'Ug==', 'Uw==', 'VA==', 'VQ==', 'Vg==', 'Vw==', 'WA==', 'WQ==', 'Wg==', 'Ww==', 'XA==', 'XQ==', 'Xg==', 'Xw==', 'YA==', 'YQ==', 'Yg==', 'Yw==', 'ZA==', 'ZQ==', 'Zg==', 'Zw==', 'aA==', 'aQ==', 'ag==', 'aw==', 'bA==', 'bQ==', 'bg==', 'bw==', 'cA==', 'cQ==', 'cg==', 'cw==', 'dA==', 'dQ==', 'dg==', 'dw==', 'eA==', 'eQ==', 'eg==', 'ew==', 'fA==', 'fQ==', 'fg==', 'fw==', 'woA=', 'woE=', 'woI=', 'woM=', 'woQ=', 'woU=', 'woY=', 'woc=', 'wog=', 'wok=', 'woo=', 'wos=', 'wow=', 'wo0=', 'wo4=', 'wo8=', 'wpA=', 'wpE=', 'wpI=', 'wpM=', 'wpQ=', 'wpU=', 'wpY=', 'wpc=', 'wpg=', 'wpk=', 'wpo=', 'wps=', 'wpw=', 'wp0=', 'wp4=', 'wp8=', 'wqA=', 'wqE=', 'wqI=', 'wqM=', 'wqQ=', 'wqU=', 'wqY=', 'wqc=', 'wqg=', 'wqk=', 'wqo=', 'wqs=', 'wqw=', 'wq0=', 'wq4=', 'wq8=', 'wrA=', 'wrE=', 'wrI=', 'wrM=', 'wrQ=', 'wrU=', 'wrY=', 'wrc=', 'wrg=', 'wrk=', 'wro=', 'wrs=', 'wrw=', 'wr0=', 'wr4=', 'wr8=', 'w4A=', 'w4E=', 'w4I=', 'w4M=', 'w4Q=', 'w4U=', 'w4Y=', 'w4c=', 'w4g=', 'w4k=', 'w4o=', 'w4s=', 'w4w=', 'w40=', 'w44=', 'w48=', 'w5A=', 'w5E=', 'w5I=', 'w5M=', 'w5Q=', 'w5U=', 'w5Y=', 'w5c=', 'w5g=', 'w5k=', 'w5o=', 'w5s=', 'w5w=', 'w50=', 'w54=', 'w58=', 'w6A=', 'w6E=', 'w6I=', 'w6M=', 'w6Q=', 'w6U=', 'w6Y=', 'w6c=', 'w6g=', 'w6k=', 'w6o=', 'w6s=', 'w6w=', 'w60=', 'w64=', 'w68=', 'w7A=', 'w7E=', 'w7I=', 'w7M=', 'w7Q=', 'w7U=', 'w7Y=', 'w7c=', 'w7g=', 'w7k=', 'w7o=', 'w7s=', 'w7w=', 'w70=', 'w74=', 'w78='] 
+        return $.b64decode(ascii[number])
+    }
+
+    plus = () { // +
+        if memory[pointer] == value_limits[1] {
+            memory[pointer] = value_limits[0]
+        } else {
+            memory[pointer] += 1
+        }
+    }
+
+    minus = () { // -
+        if memory[pointer] == value_limits[0] {
+            memory[pointer] = value_limits[1]
+        } else {
+            memory[pointer] -= 1
+        }
+    }
+
+    pointer_left = () { // <
+        if pointer > 0 {
+            pointer--
+        } else {
+            pointer = memory_max - 1
+        }
+    }
+
+    pointer_right = () { // >
+        if pointer < memory_max - 1 {
+            pointer++
+        } else {
+            pointer = 0
+        }
+    }
+
+    loop_start = () { // [
+        loop_open.push(index)
+    }
+
+    loop_end = () { // ]
+        if memory[pointer] != 0 {
+            index = loop_open[loop_open.length - 1]
+        } else {
+            loop_open.pop()
+        }
+    }
+
+    print = () { // .
+        output.push(to_ascii(memory[pointer] % 255))
+    }
+
+    print_raw = () { // ,
+        output.push(memory[pointer])
+    }
+
+    data_struct = (_type: @type_indicator) { // $
+        data_len = memory[pointer]
+        temp_pointer = pointer
+
+        let data = []
+
+        for i in 0..data_len {
+            pointer_right()
+            temp_to_push = to_ascii(memory[pointer] % 255) if _type == @string else memory[pointer]
+            
+            data.push(temp_to_push as _type)
+        }
+
+        pointer = temp_pointer
+        return data
+    }
+
+    add_obj = () { // @
+        properties_len = memory[pointer]
+
+        let properties = obj{}
+        let prop_id = 0
+        let prop_value = 0
+        let temp_pointer = pointer
+
+        for i in 0..properties_len {
+            pointer_right()
+            let prop_id = memory[pointer]
+            
+            pointer_right()
+            let prop_value = memory[pointer]
+
+            if !(prop_id in obj_props_ids) { break }
+            
+            _bool = () {
+                prop_value = @bool(prop_value)
+            }
+
+            _group = () {
+                if prop_value != 0 {
+                    prop_value = @group(prop_value)
+                } else {
+                    prop_value = ?g
+                }
+            }
+
+            _color = () {
+                if prop_value != 0 {
+                    prop_value = @color(prop_value)
+                } else {
+                    prop_value = ?c
+                }
+            }
+
+            _block = () {
+                if prop_value != 0 {
+                    prop_value = @block(prop_value)
+                } else {
+                    prop_value = ?b
+                }
+            }
+
+            _item = () {
+                if prop_value != 0 {
+                    prop_value = @item(prop_value)
+                } else {
+                    prop_value = ?i
+                }
+            }
+
+            temp = obj_props_patterns[obj_props_ids.index(prop_id)]
+
+            _data_struct = (_type: @type_indicator) {
+                prop_value = data_struct(_type).join("") if _type == @string else data_struct(_type)
+                if prop_id == 31 { prop_value = $.b64encode(prop_value) }
+            }
+            
+            if @bool in temp {
+                _bool()
+            } else if @string in temp {
+                _data_struct(@string) 
+            } else if "[" in @string(temp) && "]" in @string(temp) {
+                _data_struct(@group)
+            } else if @group in temp {
+                _group()
+            } else if @color in temp {
+                _color()
+            } else if @block in temp {
+                _block()
+            } else if @item in temp {
+                _item()
+            } 
+            
+            prop_id = obj_props_vals[obj_props_ids.index(prop_id)]
+            prop_value = prop_value
+
+            properties.set(prop_id, prop_value)
+        }
+        pointer = temp_pointer
+        $.print(properties)
+    }
+
+    dump_memory = () { // #
+        if dump_whole_memory {
+            let temp_mem = memory
+
+            temp_mem[pointer.floor()] = "(" + @string(memory[pointer]) + ")"
+
+            dump.push("pointer: " + @string(pointer))
+            dump.push(@string(temp_mem).replace(r"[^0-9 ()]", ""))
+
+            return
+        }
+
+        print_min = (pointer-65).clamp(0, memory_max)
+        print_max = (pointer+65).clamp(0, memory_max)
+
+        dump.push("pointer: " + @string(pointer))
+
+        let trimmed = memory[print_min:print_max]
+        trimmed[pointer.floor() - print_min] = "(" + @string(memory[pointer]) + ")"
+        joined = @string(trimmed).replace(r"[^0-9 ()]", "")
+        
+        if print_min != 0 {
+            if print_max != memory_max {
+                dump.push("... (" + @string(print_min - 1) + " more values) " + (joined) + " ... (" + @string(memory_max - print_max + 1) + " more values) " + "\n")
+            } else {
+                dump.push("... (" + @string(print_min - 1) + " more values) " + (joined) + "\n")
+            }
+        } else if print_max != memory_max {
+            dump.push((joined) + " ... (" + @string(memory_max - print_max + 1) + " more values) " + "\n")
+        } else {
+            dump.push(joined + "\n")
+        }
+    }
+
+    while tokens.length > index {
+        match tokens[index] { // match the token to the function
+            =="+": plus(),
+            =="-": minus(),
+            =="<": pointer_left(),
+            ==">": pointer_right(),
+            =="[": loop_start(),
+            =="]": loop_end(),
+            ==".": print(),
+            ==",": print_raw(),
+            =="@": add_obj(),
+            =="#": dump_memory(),
+        }
+        index++
+        
+        if $.time() - time > timeout_time {
+            output = ["timeout at index ", index] // program timeout
+            break
+        }
+    }
+
+    dump_memory()
+
+    return {output: output, dump: dump}
+}
+
+return {interpreter: main}
