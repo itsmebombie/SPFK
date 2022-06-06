@@ -1,0 +1,7 @@
+%YAML 1.2
+---
+
+name: spfk
+version: 0.1
+folders:
+  - libraries/spfk
