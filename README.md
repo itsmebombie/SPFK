@@ -24,7 +24,7 @@ P.S. Values automatically get converted to a group/color channel/item channel/bl
 ## $
 This command gets the next cells' values and the amount of values it gets depends on the current cell's value.
 It is only used when a string/array is necessary while adding an object.
-For example, if your memory looks like this `3, 67, 70, 73, 94` and the pointer is pointing at the first cell, it will either return `[67, 70, 73]` or `CFI` depending on the situation. 
+For example, if your memory looks like this `3, 67, 70, 73, 94` and the pointer is pointing at the first cell, it will either return `[67, 70, 73]` or `"CFI"` depending on the situation. 
 
 # USAGE
 First of all, copy the folder [spfk](./spfk) in your libraries folder for it to work.
