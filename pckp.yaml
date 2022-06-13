@@ -4,4 +4,4 @@
 name: spfk
 version: "0.2"
 folders:
-  - libraries/spfk
+  - spfk
